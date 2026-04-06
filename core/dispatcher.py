@@ -17,10 +17,8 @@ from typing import Optional, Callable
 logger = logging.getLogger(__name__)
 
 # gh_auto path
-_SHARED_SCRIPTS = os.path.expanduser(
-    '~/Documents/ProjectsCL1/_shared/scripts'
-)
-GH_AUTO = os.path.join(_SHARED_SCRIPTS, 'gh_auto')
+_home = os.path.expanduser('~').replace('\\', '/')
+GH_AUTO = f'{_home}/Documents/ProjectsCL1/_shared/scripts/gh_auto'
 _GIT_BASH = r'C:\Program Files\Git\bin\bash.exe'
 if not os.path.exists(_GIT_BASH):
     _GIT_BASH = 'bash'

@@ -6,7 +6,7 @@
 - [x] T003: Create core/dispatcher.py — executes brain decisions: post comments via gh, dispatch to CCC bridge, email alerts via email-manager
 - [x] T004: Create github/poller.py — polls all event types via gh_auto CLI (issues, PRs, discussions, pushes, notifications, settings, actions)
 - [x] T005: Create github/normalizer.py — converts raw gh API responses into EventStore-compatible records
-- [ ] T006: Create config/accounts.yaml — lists monitored accounts with event filters and poll intervals
+- [x] T006: Create config/accounts.yaml — lists monitored accounts with event filters and poll intervals
 
 ## Settings & Security Monitoring
 - [ ] T007: Create github/settings.py — snapshot repo settings (visibility, branch protection, collaborators, apps), detect drift between polls
