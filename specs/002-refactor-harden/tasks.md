@@ -18,3 +18,4 @@
 ## Fixes
 - [x] T028: Fix dispatcher email alert — replace broken email_manager CLI call with alerts.jsonl log file
 - [x] T029: Update install-scheduler.sh to support continuous service mode as alternative to periodic task
+- [x] T030: Fix service mode — use process guard + MINUTE/1 schedule (ONLOGON requires admin)
