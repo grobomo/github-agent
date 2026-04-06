@@ -1,5 +1,5 @@
 {
-  "github_account": "joel-ginsberg_tmemu",
-  "visibility": "private",
-  "reason": "GitHub event agent, references internal repos and RONE infrastructure"
+  "github_account": "grobomo",
+  "visibility": "public",
+  "reason": "Generic GitHub monitoring agent, no internal/customer data"
 }
