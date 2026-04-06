@@ -3,15 +3,18 @@
 ## Current State
 Branch: `main`
 Service: `github-agent-service` running continuously (MINUTE/1 with process guard)
-PRs merged: #1-#4, #7-#22 (specs 001-006, 008-010 complete)
+PRs merged: #1-#4, #7-#24 (specs 001-006, 008-012 complete)
 Tests: 90 passing
 
 ## Session Handoff
 Last session completed:
 - Spec 010: Service health monitoring (PR #22) — log rotation, heartbeat, watchdog, circuit breaker
-- 90 tests passing, 22 PRs merged
+- Spec 011: Code cleanup (PR #23) — removed redundant import
+- Spec 012: README update (PR #24) — documented memory, health, watchdog features
+- Full code review of all modules — no issues found
+- 90 tests passing, 24 PRs merged
 - Next: Spec 007a-c (unified brain with Teams integration) — cross-project, needs tmemu/teams-agent
-- Or: Spec 008 (webhook receiver) from Future Specs
+- Or: Spec 008 (webhook receiver) from Future Specs — needs public endpoint infrastructure
 
 ## Pending Work (from user feedback)
 - [x] Issue #16: Brain needs long-term context — Spec 008 complete (PR #19). Three-tier memory: hot cache + per-repo JSON + account-level memory. Compactor runs after each full scan.
