@@ -1,0 +1,32 @@
+# GitHub accounts to monitor.
+# One agent process runs per account for security isolation.
+# Repos can be explicit or auto-discovered from the account.
+
+accounts:
+  - name: grobomo
+    # Discover all repos automatically
+    discover: true
+    # Or list specific repos:
+    # repos:
+    #   - grobomo/github-agent
+    #   - grobomo/hook-runner
+    poll_interval: 300  # seconds (5 min)
+    # Event types to monitor (all by default)
+    events:
+      - issues
+      - prs
+      - discussions
+      - notifications
+      - repo_events
+      - workflow_runs
+      - settings  # snapshot + drift detection
+
+  - name: joel-ginsberg_tmemu
+    discover: true
+    poll_interval: 300
+    events:
+      - issues
+      - prs
+      - notifications
+      - workflow_runs
+      - settings
