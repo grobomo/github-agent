@@ -3,16 +3,15 @@
 ## Current State
 Branch: `main`
 Service: `github-agent-service` running continuously (MINUTE/1 with process guard)
-PRs merged: #1-#4, #7-#19 (specs 001-006, 008 complete)
+PRs merged: #1-#4, #7-#20 (specs 001-006, 008-009 complete)
+Tests: 81 passing
 
 ## Session Handoff
 Last session completed:
-- Spec 006: Fixed agent responsiveness — DB retry, lock files, fallback RESPOND to external issues
-- Agent service restarted (PID in data/agent.lock), running against 57 repos
-- User requested unified brain: merge GH+Teams into one silent service (Spec 007 written below)
-- teams-agent exists at _tmemu/teams-agent/ with its own classifier+store — needs unification
-- Stale branch `spec-008-long-term-context` on remote needs cleanup
-- 54 tests, 17 PRs merged
+- Spec 008: Long-term brain context (PR #19) — three-tier memory (hot cache + per-repo JSON + account memory)
+- Spec 009: Silent service deployment (PR #20) — VBS launcher, scheduled task, no visible windows
+- All "Pending Work" items complete, 81 tests, 20 PRs merged
+- Next: Spec 007a-c (unified brain with Teams integration) — major cross-project refactor
 
 ## Pending Work (from user feedback)
 - [x] Issue #16: Brain needs long-term context — Spec 008 complete (PR #19). Three-tier memory: hot cache + per-repo JSON + account-level memory. Compactor runs after each full scan.
@@ -71,10 +70,10 @@ What needs to happen:
 - [ ] Spec 007a: Unified EventStore schema that both GH and Teams records fit into (core/store.py already source-agnostic by design)
 - [ ] Spec 007b: Single brain service — one process, one DB, one LLM context window spanning ALL sources
 - [ ] Spec 007c: Teams poller as input channel — port teams-agent polling into a channel adapter for the unified brain
-- [ ] Spec 007d: Silent service deployment — pythonw.exe or Windows Service, no visible windows, no focus stealing
+- [x] Spec 007d: Silent service deployment — done as Spec 009 (VBS launcher, scheduled task, no visible windows)
 - [ ] Spec 007e: Service health monitoring — watchdog, auto-restart, log rotation
 - [ ] Spec 007f: Tests for unified pipeline, service lifecycle, channel adapters
-- [ ] Spec 007g: Issue #16 — long-term brain context (entire GH history, short-term cache + long-term reference files, rotating data)
+- [x] Spec 007g: Issue #16 — done as Spec 008 (three-tier memory: hot cache + per-repo JSON + account memory)
 
 Dependencies:
 - teams-agent at `_tmemu/teams-agent/` — need to read its store schema and classifier
