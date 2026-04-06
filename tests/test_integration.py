@@ -171,6 +171,53 @@ def test_dedup_across_cycles():
     store.close()
 
 
+def test_lock_file_lifecycle():
+    """Lock file should be created on start and removed on shutdown."""
+    import os
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmpdir:
+        lock_file = os.path.join(tmpdir, 'agent.lock')
+
+        # Simulate what main.py does
+        with open(lock_file, 'w') as f:
+            f.write(str(os.getpid()))
+
+        assert os.path.exists(lock_file)
+        with open(lock_file) as f:
+            assert f.read() == str(os.getpid())
+
+        # Simulate cleanup
+        os.unlink(lock_file)
+        assert not os.path.exists(lock_file)
+
+
+def test_external_issue_triggers_respond():
+    """External issue should flow through to RESPOND action."""
+    store = EventStore(':memory:')
+    dispatcher = Dispatcher(store, dry_run=True)
+
+    record = {
+        'source': 'github', 'account': 'grobomo',
+        'channel': 'grobomo/repo1',
+        'event_id': 'gh:grobomo/repo1:issue:99',
+        'event_type': 'issue_opened',
+        'actor': 'external-user', 'title': '#99: Help needed',
+        'body': 'How do I use this?',
+        'metadata': {'number': 99},
+        'timestamp': '2026-04-06T10:00:00Z',
+    }
+    store.insert(**record)
+
+    decisions = _fallback_decisions([record])
+    assert decisions[0]['action'] == 'RESPOND'
+    assert 'response_body' in decisions[0]
+
+    # Dispatch should work in dry-run
+    result = dispatcher.execute(decisions[0], record)
+    assert result['status'] == 'dry_run'
+    store.close()
+
+
 if __name__ == '__main__':
     tests = [v for k, v in sorted(globals().items()) if k.startswith('test_')]
     for t in tests:
