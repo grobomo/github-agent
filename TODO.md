@@ -3,16 +3,12 @@
 ## Current State
 Branch: `main`
 Service: `github-agent-service` running continuously (MINUTE/1 with process guard)
-PRs merged: #1-#4, #7-#11 (spec 001 + spec 002 complete)
+PRs merged: #1-#4, #7-#12 (spec 001 + spec 002 + spec 003 complete)
 
 ## Session Handoff
 Last session completed:
-- T022-T024: Brain timeout resilience, DB busy_timeout, live E2E verified
-- T025-T027: Continuous mode — tiered fast/full polling, service launcher
-- T028: Fixed dispatcher email alert (was calling nonexistent module)
-- T029-T030: Service mode installer with process guard (non-admin Windows compatible)
-- Installed continuous service: 10s notifications, 300s full scan
-- Code review: all modules clean, 39 tests pass, 11 PRs merged
+- T031-T035: Spec 003 publish — README, LICENSE, repo description/topics, pushed to GitHub
+- Previous: T019-T030 (spec 002), T001-T018 (spec 001), 39 tests, 12 PRs merged
 
 ## Operational Status
 - [x] Continuous service: `github-agent-service` (MINUTE/1 + process guard)
@@ -26,12 +22,12 @@ Last session completed:
 ## Spec 002 (Refactor & Harden) — complete
 - [x] T019–T030: All complete
 
-## Spec 003 (Publish & Docs) — in progress
+## Spec 003 (Publish & Docs) — complete
 - [x] T031: README.md
 - [x] T032: MIT LICENSE
-- [ ] T033: Push all commits to remote
-- [ ] T034: Set repo description and topics
-- [ ] T035: Update TODO.md
+- [x] T033: Push all commits to remote
+- [x] T034: Set repo description and topics
+- [x] T035: Update TODO.md
 
 ## Future Specs
 - [ ] Spec 004: Cross-agent integration (share EventStore schema with teams-agent)

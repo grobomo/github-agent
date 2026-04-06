@@ -5,8 +5,8 @@
 - [x] T032: Add MIT LICENSE file
 
 ## GitHub Repo Polish
-- [ ] T033: Push all commits to grobomo/github-agent remote
-- [ ] T034: Set repo description and topics via gh CLI
+- [x] T033: Push all commits to grobomo/github-agent remote
+- [x] T034: Set repo description and topics via gh CLI
 
 ## TODO Cleanup
-- [ ] T035: Update TODO.md — mark publish complete, add spec 003 status
+- [x] T035: Update TODO.md — mark publish complete, add spec 003 status
