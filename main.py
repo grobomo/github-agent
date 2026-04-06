@@ -15,6 +15,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 
 from core.store import EventStore
 from core.brain import analyze_events, _fallback_decisions
+from core.context import ContextCache
 from core.dispatcher import Dispatcher
 from github.poller import GitHubPoller
 from github.normalizer import (
@@ -71,6 +72,7 @@ def run_agent(account: str, repos: list[str] = None,
     store = EventStore(db_path)
     poller = GitHubPoller(account, repos=repos)
     dispatcher = Dispatcher(store, dry_run=dry_run)
+    context_cache = ContextCache(store, account)
 
     logger.info(
         f'Starting github-agent for {account}, '
@@ -159,11 +161,13 @@ def run_agent(account: str, repos: list[str] = None,
 
         logger.info(f'{len(new_events)} new events for {account}')
 
-        # Analyze with brain
+        # Build structured context and analyze with brain
+        context = context_cache.build_and_save()
         history = store.get_context_window(account=account, hours=24)
         decisions = analyze_events(new_events, history, {
             'account': account,
             'total_events': store.count(account=account),
+            'context_summary': context_cache.build_prompt_context(),
         })
 
         # Execute decisions

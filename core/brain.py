@@ -62,9 +62,15 @@ def _build_context_prompt(new_events: list[dict],
     parts = []
 
     if account_info:
+        # Use structured context summary if available (from ContextCache)
+        context_summary = None
+        if isinstance(account_info, dict):
+            context_summary = account_info.pop('context_summary', None)
         parts.append(f"## Account Info\n{json.dumps(account_info, indent=2)}")
 
-    if history:
+    if context_summary:
+        parts.append(f"\n{context_summary}")
+    elif history:
         parts.append("## Recent Activity (last 24h)")
         for evt in history[-100:]:
             parts.append(
