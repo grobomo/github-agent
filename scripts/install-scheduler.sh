@@ -5,9 +5,9 @@
 # Windows (Git Bash): creates a Windows Scheduled Task via schtasks
 #
 # Usage:
-#   bash scripts/install-cron.sh              # install
-#   bash scripts/install-cron.sh --remove     # uninstall
-#   bash scripts/install-cron.sh --status     # check if installed
+#   bash scripts/install-scheduler.sh              # install
+#   bash scripts/install-scheduler.sh --remove     # uninstall
+#   bash scripts/install-scheduler.sh --status     # check if installed
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

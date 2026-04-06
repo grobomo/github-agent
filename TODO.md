@@ -3,32 +3,27 @@
 ## Current State
 Branch: `main` — all specs merged
 Scheduled task: `github-agent-poll` running every 5 min (Windows Task Scheduler)
-PRs merged: #1 (spec 001, 18 tasks), #2 (DRY refactor), #3 (events 404), #4 (schtasks fix)
+PRs merged: #1 (spec 001, 18 tasks), #2 (DRY refactor), #3 (events 404), #4 (schtasks fix), #7 (brain resilience)
 
 ## Session Handoff
 Last session completed:
-- All 18 spec-001 tasks (store, brain, dispatcher, poller, normalizer, settings, context cache, tests, CI)
-- Spec 002: T019 (DRY gh_cli), T020 (events 404 fix), T021 (schtasks Git Bash fix)
-- Installed Windows scheduled task for 5-min polling
-- 39 tests pass, secret-scan CI configured
-
-User asked: "What is your ETA for when I can add a comment in a discussion or issue and have you read and reply in near-real time?"
-Answer: The pipeline works end-to-end but needs `claude -p` available for intelligent replies (fallback rules only LOG/ALERT, don't RESPOND). The cron job polls every 5 min. For near-real-time, use continuous mode with shorter interval.
+- T022: Brain catches claude -p timeout, falls back to rule-based decisions
+- T023: SQLite busy_timeout=5000 for concurrent scheduled task access
+- T024: Live E2E verified — issue #6 created, 11 events detected, fallback pipeline works
+- 39 tests pass
 
 ## Operational Status
 - [x] Polling: scheduled task runs every 5 min
-- [x] Store: SQLite + FTS working
-- [x] Brain: fallback rules working, `claude -p` integration ready but needs CLI available
+- [x] Store: SQLite + FTS working, concurrent access fixed
+- [x] Brain: fallback rules working, claude -p gracefully times out
 - [x] Dispatcher: gh comment posting works in dry-run, live mode ready
-- [ ] Live test: post a GitHub issue comment and verify agent detects + responds
+- [x] Live test: issue #6 detected, 11 events stored, fallback decisions made
 - [ ] Continuous mode deployment: `python main.py --account grobomo --interval 60` for near-real-time
 
 ## Remaining Tasks
 
-### Spec 002 (Refactor & Harden) — more tasks possible
-- [x] T019: Extract github/gh_cli.py
-- [x] T020: Handle events API 404 gracefully
-- [x] T021: Fix schtasks path mangling
+### Spec 002 (Refactor & Harden) — all done
+- [x] T019–T024: All complete
 
 ### Future Specs
 - [ ] Spec 003: Cross-agent integration (share EventStore schema with teams-agent)
