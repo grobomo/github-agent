@@ -60,10 +60,10 @@ def _build_context_prompt(new_events: list[dict],
                           account_info: Optional[dict] = None) -> str:
     """Build the full prompt with context for the LLM."""
     parts = []
+    context_summary = None
 
     if account_info:
         # Use structured context summary if available (from ContextCache)
-        context_summary = None
         if isinstance(account_info, dict):
             context_summary = account_info.pop('context_summary', None)
         parts.append(f"## Account Info\n{json.dumps(account_info, indent=2)}")
