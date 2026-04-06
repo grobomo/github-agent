@@ -296,7 +296,6 @@ def run_agent(account: str, repos: list[str] = None,
                 # Account summary: daily
                 acct = memory_store.load_account_memory(account)
                 last_acct = acct.get('last_compacted_at', '')
-                from datetime import datetime, timezone
                 now = datetime.now(timezone.utc).isoformat()
                 if not last_acct or last_acct[:10] != now[:10]:
                     if compactor.compact_account():
