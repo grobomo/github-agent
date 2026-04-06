@@ -3,7 +3,7 @@
 ## Current State
 Branch: `main`
 Service: `github-agent-service` running continuously (MINUTE/1 with process guard)
-PRs merged: #1-#4, #7-#17 (specs 001-006 complete)
+PRs merged: #1-#4, #7-#19 (specs 001-006, 008 complete)
 
 ## Session Handoff
 Last session completed:
@@ -15,8 +15,8 @@ Last session completed:
 - 54 tests, 17 PRs merged
 
 ## Pending Work (from user feedback)
-- [ ] Issue #16: Brain needs long-term context — entire GH account history, not just 24h. Short-term cache + long-term reference files, rotating data over time. This is the next high-value spec.
-- [ ] Clean up stale remote branch `spec-008-long-term-context`
+- [x] Issue #16: Brain needs long-term context — Spec 008 complete (PR #19). Three-tier memory: hot cache + per-repo JSON + account-level memory. Compactor runs after each full scan.
+- [x] Clean up stale remote branch `spec-008-long-term-context`
 - [ ] Install scheduled task so service auto-starts (currently manual cmd.exe launch)
 
 ## Operational Status
