@@ -9,7 +9,7 @@ import logging
 import os
 from typing import Optional
 
-from github.poller import gh_command
+from github.gh_cli import gh_command
 
 logger = logging.getLogger(__name__)
 
