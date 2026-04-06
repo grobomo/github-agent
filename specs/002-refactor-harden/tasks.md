@@ -9,3 +9,8 @@
 - [x] T022: Catch claude -p timeout in brain — fall back to rule-based decisions instead of crashing
 - [x] T023: Fix DB locking — add busy_timeout for concurrent scheduled task access
 - [x] T024: Live E2E test — create issue, run agent, verify detection + fallback decision pipeline
+
+## Continuous Mode
+- [x] T025: Rename install-cron.sh → install-scheduler.sh (not using cron)
+- [x] T026: Fast-poll mode — notifications-only for intervals <30s, full repo scan at configurable longer interval
+- [x] T027: Service launcher script with configurable interval for near-real-time polling

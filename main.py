@@ -60,9 +60,15 @@ def _load_config(path: str) -> dict:
 
 def run_agent(account: str, repos: list[str] = None,
               db_path: str = None, poll_interval: float = 300,
+              full_scan_interval: float = 300,
               dry_run: bool = False, once: bool = False,
               health_port: int = 0):
-    """Run the agent loop for a single account."""
+    """Run the agent loop for a single account.
+
+    When poll_interval < full_scan_interval, fast cycles poll only
+    notifications (one API call). Full repo scans run every
+    full_scan_interval seconds.
+    """
 
     if not db_path:
         data_dir = os.path.join(os.path.dirname(__file__), 'data')
@@ -76,17 +82,21 @@ def run_agent(account: str, repos: list[str] = None,
 
     logger.info(
         f'Starting github-agent for {account}, '
-        f'poll_interval={poll_interval}s, dry_run={dry_run}'
+        f'poll_interval={poll_interval}s, '
+        f'full_scan_interval={full_scan_interval}s, '
+        f'dry_run={dry_run}'
     )
 
     stats = {
         'status': 'ok',
         'account': account,
         'polls': 0,
+        'full_scans': 0,
         'events_stored': 0,
         'actions_taken': 0,
         'errors': 0,
         'start_time': time.time(),
+        'last_full_scan': 0,
     }
 
     if health_port:
@@ -95,12 +105,10 @@ def run_agent(account: str, repos: list[str] = None,
         threading.Thread(target=server.serve_forever, daemon=True).start()
         logger.info(f'Health endpoint on :{health_port}')
 
-    def poll_cycle():
-        """Single poll → normalize → store → analyze → dispatch cycle."""
-        raw = poller.poll_all()
+    def _normalize_raw(raw: dict) -> list[dict]:
+        """Normalize raw API data and store events. Returns new events."""
         new_events = []
 
-        # Normalize and store each event type
         for repo_str, issues in raw.get('issues', {}).items():
             for issue in issues:
                 record = normalize_issue(issue, account, repo_str)
@@ -136,6 +144,51 @@ def run_agent(account: str, repos: list[str] = None,
             if store.insert(**record):
                 new_events.append(record)
 
+        return new_events
+
+    def _analyze_and_dispatch(new_events: list[dict]):
+        """Run brain analysis and dispatch actions."""
+        context = context_cache.build_and_save()
+        history = store.get_context_window(account=account, hours=24)
+        decisions = analyze_events(new_events, history, {
+            'account': account,
+            'total_events': store.count(account=account),
+            'context_summary': context_cache.build_prompt_context(),
+        })
+
+        for decision in decisions:
+            eid = decision.get('event_id', '')
+            matching = [e for e in new_events if e.get('event_id') == eid]
+            event = matching[0] if matching else {}
+            try:
+                result = dispatcher.execute(decision, event)
+                if result.get('status') not in ('ignored', 'logged'):
+                    stats['actions_taken'] += 1
+                    logger.info(
+                        f'Action: {decision.get("action")} on {eid} '
+                        f'-> {result.get("status")}'
+                    )
+            except Exception as e:
+                logger.error(f'Dispatch error for {eid}: {e}')
+                stats['errors'] += 1
+
+    def poll_fast():
+        """Fast poll: notifications only (one API call)."""
+        raw = {'notifications': poller.poll_notifications()}
+        new_events = _normalize_raw(raw)
+        stats['polls'] += 1
+
+        if not new_events:
+            logger.debug(f'No new notifications for {account}')
+            return
+        logger.info(f'{len(new_events)} new notifications for {account}')
+        _analyze_and_dispatch(new_events)
+
+    def poll_full():
+        """Full poll: all repos + notifications + settings."""
+        raw = poller.poll_all()
+        new_events = _normalize_raw(raw)
+
         # Settings drift detection per repo
         for repo_str in poller.repos:
             parts = repo_str.split('/', 1)
@@ -153,44 +206,20 @@ def run_agent(account: str, repos: list[str] = None,
                 logger.error(f'Settings poll failed for {repo_str}: {e}')
 
         stats['polls'] += 1
+        stats['full_scans'] += 1
+        stats['last_full_scan'] = time.time()
         stats['events_stored'] += len(new_events)
 
         if not new_events:
             logger.debug(f'No new events for {account}')
             return
-
-        logger.info(f'{len(new_events)} new events for {account}')
-
-        # Build structured context and analyze with brain
-        context = context_cache.build_and_save()
-        history = store.get_context_window(account=account, hours=24)
-        decisions = analyze_events(new_events, history, {
-            'account': account,
-            'total_events': store.count(account=account),
-            'context_summary': context_cache.build_prompt_context(),
-        })
-
-        # Execute decisions
-        for decision in decisions:
-            eid = decision.get('event_id', '')
-            matching = [e for e in new_events if e.get('event_id') == eid]
-            event = matching[0] if matching else {}
-            try:
-                result = dispatcher.execute(decision, event)
-                if result.get('status') not in ('ignored', 'logged'):
-                    stats['actions_taken'] += 1
-                    logger.info(
-                        f'Action: {decision.get("action")} on {eid} '
-                        f'-> {result.get("status")}'
-                    )
-            except Exception as e:
-                logger.error(f'Dispatch error for {eid}: {e}')
-                stats['errors'] += 1
+        logger.info(f'{len(new_events)} new events for {account} (full scan)')
+        _analyze_and_dispatch(new_events)
 
     # Main loop
     if once:
         try:
-            poll_cycle()
+            poll_full()
         except Exception as e:
             logger.error(f'Poll cycle failed: {e}')
         finally:
@@ -202,7 +231,11 @@ def run_agent(account: str, repos: list[str] = None,
 
     while not _shutdown.is_set():
         try:
-            poll_cycle()
+            elapsed = time.time() - stats['last_full_scan']
+            if elapsed >= full_scan_interval:
+                poll_full()
+            else:
+                poll_fast()
         except Exception as e:
             logger.error(f'Poll cycle error: {e}')
             stats['errors'] += 1
@@ -225,7 +258,9 @@ def main():
     parser.add_argument('--db', default=None,
                         help='Path to SQLite database')
     parser.add_argument('--interval', type=float, default=300,
-                        help='Poll interval in seconds')
+                        help='Poll interval in seconds (fast polls use notifications only)')
+    parser.add_argument('--full-scan-interval', type=float, default=300,
+                        help='Full repo scan interval in seconds (default: 300)')
     parser.add_argument('--dry-run', action='store_true',
                         help='Log actions without executing')
     parser.add_argument('--once', action='store_true',
@@ -246,6 +281,7 @@ def main():
         repos=args.repos,
         db_path=args.db,
         poll_interval=args.interval,
+        full_scan_interval=args.full_scan_interval,
         dry_run=args.dry_run,
         once=args.once,
         health_port=args.health_port,

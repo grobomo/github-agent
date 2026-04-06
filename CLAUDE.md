@@ -33,14 +33,20 @@ Dispatcher (RESPOND via gh, DISPATCH to CCC, ALERT via email, LOG)
 # Single account, single poll, dry run
 python main.py --account grobomo --once --dry-run -v
 
+# Continuous service (near-real-time, notifications every 10s, full scan every 5min)
+bash scripts/service.sh
+
 # Single account, continuous
-python main.py --account grobomo --interval 300
+python main.py --account grobomo --interval 10
 
 # All accounts in parallel
 bash scripts/run.sh
 
 # With health endpoint
 python main.py --account grobomo --health-port 8081
+
+# Install/remove scheduled task (Windows) or cron (Linux)
+bash scripts/install-scheduler.sh [--remove|--status]
 ```
 
 ## Key Files
