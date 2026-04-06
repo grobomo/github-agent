@@ -101,7 +101,11 @@ def get_repo_events(owner: str, repo: str,
         '--field', f'per_page={per_page}',
     ])
     if code != 0:
-        logger.error(f'Failed to get events for {owner}/{repo}: {err}')
+        # Events API returns 404 for some repos (permissions, new repos, etc.)
+        if '404' in err or 'Not Found' in err:
+            logger.debug(f'Events API not available for {owner}/{repo} (404)')
+        else:
+            logger.error(f'Failed to get events for {owner}/{repo}: {err}')
         return []
     return _parse_json(out)
 
