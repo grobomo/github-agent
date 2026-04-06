@@ -267,6 +267,10 @@ def main():
                         help='Run single poll cycle then exit')
     parser.add_argument('--health-port', type=int, default=0,
                         help='Health check port (0 to disable)')
+    parser.add_argument('--report', action='store_true',
+                        help='Generate HTML dashboard report and exit')
+    parser.add_argument('--output', default=None,
+                        help='Output path for report (used with --report)')
     parser.add_argument('--verbose', '-v', action='store_true')
 
     args = parser.parse_args()
@@ -275,6 +279,18 @@ def main():
         level=logging.DEBUG if args.verbose else logging.INFO,
         format='%(asctime)s %(name)s %(levelname)s %(message)s',
     )
+
+    if args.report:
+        from core.report import generate_report
+        db_path = args.db
+        if not db_path:
+            data_dir = os.path.join(os.path.dirname(__file__), 'data')
+            db_path = os.path.join(data_dir, f'{args.account}.db')
+        store = EventStore(db_path)
+        path = generate_report(store, args.account, output_path=args.output)
+        store.close()
+        print(f'Report generated: {path}')
+        return
 
     run_agent(
         account=args.account,
