@@ -44,9 +44,16 @@ Last session completed:
 - [x] T045: --auto-report flag
 - [x] T046: Task tracking
 
+## Spec 006 (Fix Responsiveness) — complete
+- [x] T047: Fallback rules RESPOND to external issues/PRs
+- [x] T048-T049: Lock file management + stale lock cleanup
+- [x] T050: DB locked retry instead of crash
+- [x] T051-T052: 5 new tests (54 total)
+- [x] T053: Task tracking
+
 ## Future Specs
-- [ ] Spec 006: Cross-agent integration (share EventStore schema with teams-agent)
-- [ ] Spec 007: Webhook receiver (GitHub webhooks for instant notification)
+- [ ] Spec 007: Cross-agent integration (share EventStore schema with teams-agent)
+- [ ] Spec 008: Webhook receiver (GitHub webhooks for instant notification)
 
 ## Related Projects
 - `_grobomo/hook-monitor/` — hook health monitoring (TODO.md only)

@@ -8,6 +8,7 @@ import argparse
 import json
 import logging
 import os
+import sqlite3
 import signal
 import threading
 import time
@@ -70,10 +71,26 @@ def run_agent(account: str, repos: list[str] = None,
     full_scan_interval seconds.
     """
 
+    data_dir = os.path.join(os.path.dirname(__file__), 'data')
+    os.makedirs(data_dir, exist_ok=True)
+
     if not db_path:
-        data_dir = os.path.join(os.path.dirname(__file__), 'data')
-        os.makedirs(data_dir, exist_ok=True)
         db_path = os.path.join(data_dir, f'{account}.db')
+
+    # Lock file management
+    lock_file = os.path.join(data_dir, 'agent.lock')
+
+    def _write_lock():
+        with open(lock_file, 'w') as f:
+            f.write(str(os.getpid()))
+
+    def _remove_lock():
+        try:
+            os.unlink(lock_file)
+        except OSError:
+            pass
+
+    _write_lock()
 
     store = EventStore(db_path)
     poller = GitHubPoller(account, repos=repos)
@@ -232,6 +249,7 @@ def run_agent(account: str, repos: list[str] = None,
             logger.error(f'Poll cycle failed: {e}')
         finally:
             store.close()
+            _remove_lock()
         return
 
     signal.signal(signal.SIGTERM, lambda s, f: _shutdown.set())
@@ -244,6 +262,12 @@ def run_agent(account: str, repos: list[str] = None,
                 poll_full()
             else:
                 poll_fast()
+        except sqlite3.OperationalError as e:
+            if 'locked' in str(e).lower():
+                logger.warning(f'DB locked, will retry next cycle: {e}')
+                stats['errors'] += 1
+            else:
+                raise
         except Exception as e:
             logger.error(f'Poll cycle error: {e}')
             stats['errors'] += 1
@@ -251,6 +275,7 @@ def run_agent(account: str, repos: list[str] = None,
 
     logger.info(f'Shutting down agent for {account}')
     store.close()
+    _remove_lock()
 
 
 def main():

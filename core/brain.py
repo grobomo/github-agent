@@ -157,27 +157,50 @@ def _fallback_decisions(events: list[dict]) -> list[dict]:
     decisions = []
     for evt in events:
         etype = evt.get('event_type', '')
+        actor = evt.get('actor', '')
+        account = evt.get('account', '')
         action = 'LOG'
         urgency = 'low'
         reason = 'LLM unavailable, rule-based fallback'
+        response_body = None
 
         if etype in ('visibility_change', 'branch_protection_change',
                      'collaborator_added', 'app_installed'):
             action = 'ALERT'
             urgency = 'high'
             reason = f'Security-sensitive event: {etype}'
+        elif etype == 'issue_opened' and actor != account:
+            action = 'RESPOND'
+            urgency = 'medium'
+            reason = f'New issue from {actor} (auto-acknowledge)'
+            response_body = (
+                'Thanks for opening this issue! The github-agent detected it '
+                'automatically. A maintainer will review it shortly.'
+            )
+        elif etype == 'pr_opened' and actor != account:
+            action = 'RESPOND'
+            urgency = 'medium'
+            reason = f'New PR from {actor} (auto-acknowledge)'
+            response_body = (
+                'Thanks for this PR! The github-agent detected it automatically. '
+                'A maintainer will review it shortly.'
+            )
         elif etype in ('issue_opened', 'pr_opened', 'discussion_created'):
             action = 'LOG'
-            urgency = 'medium'
+            urgency = 'low' if actor == account else 'medium'
+            reason = f'Own activity, no response needed' if actor == account else reason
         elif etype == 'workflow_failure':
             action = 'ALERT'
             urgency = 'medium'
             reason = f'CI failure on {evt.get("channel", "?")}'
 
-        decisions.append({
+        decision = {
             'event_id': evt.get('event_id', ''),
             'action': action,
             'reason': reason,
             'urgency': urgency,
-        })
+        }
+        if response_body:
+            decision['response_body'] = response_body
+        decisions.append(decision)
     return decisions
