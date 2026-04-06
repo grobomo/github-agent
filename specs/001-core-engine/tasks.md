@@ -9,8 +9,8 @@
 - [x] T006: Create config/accounts.yaml — lists monitored accounts with event filters and poll intervals
 
 ## Settings & Security Monitoring
-- [ ] T007: Create github/settings.py — snapshot repo settings (visibility, branch protection, collaborators, apps), detect drift between polls
-- [ ] T008: Settings drift detection — compare current snapshot to previous, generate ALERT events for security-sensitive changes
+- [x] T007: Create github/settings.py — snapshot repo settings (visibility, branch protection, collaborators, apps), detect drift between polls
+- [x] T008: Settings drift detection — compare current snapshot to previous, generate ALERT events for security-sensitive changes
 
 ## Context Cache
 - [ ] T009: Create core/context.py — builds rolling context cache from EventStore for claude -p prompts (last 24h events, active issues/PRs summary, settings state)
