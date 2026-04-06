@@ -26,11 +26,17 @@ Last session completed:
 ## Spec 002 (Refactor & Harden) — complete
 - [x] T019–T030: All complete
 
+## Spec 003 (Publish & Docs) — in progress
+- [x] T031: README.md
+- [x] T032: MIT LICENSE
+- [ ] T033: Push all commits to remote
+- [ ] T034: Set repo description and topics
+- [ ] T035: Update TODO.md
+
 ## Future Specs
-- [ ] Spec 003: Cross-agent integration (share EventStore schema with teams-agent)
-- [ ] Spec 004: Dashboard/reporting (HTML status page like v1-report)
-- [ ] Spec 005: Webhook receiver (GitHub webhooks for instant notification)
-- [ ] Publish: generate docs, README, publish to marketplace via publish-project skill
+- [ ] Spec 004: Cross-agent integration (share EventStore schema with teams-agent)
+- [ ] Spec 005: Dashboard/reporting (HTML status page like v1-report)
+- [ ] Spec 006: Webhook receiver (GitHub webhooks for instant notification)
 
 ## Related Projects
 - `_grobomo/hook-monitor/` — hook health monitoring (TODO.md only)
