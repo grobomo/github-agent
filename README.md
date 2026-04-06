@@ -18,7 +18,7 @@ GitHubPoller (per-account, auto-discovers repos)
 Normalizer → EventStore (SQLite + FTS)
   │
   ▼
-Brain (LLM analysis with 24h context window)
+Brain (LLM analysis with three-tier memory)
   │
   ▼
 Dispatcher (comment via gh, dispatch to CCC, alert via email, log)
@@ -55,7 +55,10 @@ python main.py --account grobomo --interval 10 --health-port 8081
 ## Running as a service
 
 ```bash
-# Install as scheduled task (Windows) or cron (Linux)
+# Install as continuous service (silent, no visible windows)
+bash scripts/install-scheduler.sh --mode service
+
+# Install as periodic task (every 5 min)
 bash scripts/install-scheduler.sh
 
 # Check status
@@ -63,9 +66,18 @@ bash scripts/install-scheduler.sh --status
 
 # Remove
 bash scripts/install-scheduler.sh --remove
+
+# Check agent health (reads heartbeat file)
+bash scripts/watchdog.sh
 ```
 
-The service uses tiered polling: fast notification checks every 10 seconds, full repo scans every 5 minutes. A process guard prevents duplicate instances.
+The service uses tiered polling: fast notification checks every 10 seconds, full repo scans every 5 minutes. A process guard prevents duplicate instances. On Windows, the service runs silently via VBS launcher (no cmd windows, no focus stealing).
+
+### Health monitoring
+
+The agent writes `data/heartbeat.json` after each poll cycle. The watchdog script (`scripts/watchdog.sh`) checks heartbeat freshness and kills stale processes. A circuit breaker (`--max-errors 50`) exits after consecutive errors to prevent infinite loops — the scheduled task restarts it on the next cycle.
+
+Log rotation is built in: `--log-max-bytes 5000000 --log-backup-count 3` (defaults).
 
 ## Dashboard
 
@@ -93,7 +105,9 @@ core/
   store.py                 # EventStore — SQLite + FTS + WAL mode
   brain.py                 # LLM analyzer + rule-based fallback
   dispatcher.py            # Action executor (gh comment, email, CCC)
-  context.py               # Context cache for brain prompts
+  context.py               # Context cache for brain prompts (Tier 1)
+  memory.py                # Per-repo + account memory (Tier 2/3)
+  compactor.py             # LLM-based memory compaction
   report.py                # HTML dashboard report generator
 github/
   poller.py                # GitHub API polling via gh CLI
@@ -103,17 +117,21 @@ github/
 scripts/
   service.sh               # Continuous service launcher (Linux/Git Bash)
   service.bat              # Continuous service launcher (Windows)
+  service-silent.vbs       # Silent VBS launcher (no visible windows)
   install-scheduler.sh     # Install/remove OS scheduled task
+  watchdog.sh              # Health check — heartbeat freshness monitor
   run.sh                   # Run all accounts in parallel
-tests/                     # 49 tests covering all modules
+tests/                     # 90 tests covering all modules
 ```
 
 ## Design decisions
 
 - **One process per account** — security isolation between accounts
 - **SQLite WAL mode** — concurrent reads during polling, busy_timeout for resilience
+- **Three-tier memory** — Tier 1: hot cache (24h events), Tier 2: per-repo JSON (purpose, milestones, threads), Tier 3: account-level summary. LLM compaction distills events into long-term context.
 - **Rule-based fallback** — when `claude` CLI is unavailable, built-in rules handle common patterns (own pushes → IGNORE, security events → ALERT)
 - **Settings drift detection** — snapshots repo settings each cycle, alerts on security-relevant changes with severity levels (critical/high/medium/low)
+- **Service health** — heartbeat file, log rotation, watchdog script, circuit breaker for consecutive errors
 - **Source-agnostic core** — `core/` knows nothing about GitHub specifically, designed for reuse by other agents (Teams, Slack, etc.)
 
 ## Configuration
