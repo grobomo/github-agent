@@ -1,43 +1,39 @@
 # GitHub Agent — TODO
 
 ## Current State
-Branch: `001-T001-event-store` (all 18 tasks complete)
-Spec: `specs/001-core-engine/` — 18 of 18 tasks complete
-Status: Ready for PR to main
+Branch: `main` — all specs merged
+Scheduled task: `github-agent-poll` running every 5 min (Windows Task Scheduler)
+PRs merged: #1 (spec 001, 18 tasks), #2 (DRY refactor), #3 (events 404), #4 (schtasks fix)
 
-Core is functional: EventStore, Brain, Dispatcher, Poller, Normalizer, Settings, Context Cache all working.
-39 tests pass. CI secret-scan configured.
+## Session Handoff
+Last session completed:
+- All 18 spec-001 tasks (store, brain, dispatcher, poller, normalizer, settings, context cache, tests, CI)
+- Spec 002: T019 (DRY gh_cli), T020 (events 404 fix), T021 (schtasks Git Bash fix)
+- Installed Windows scheduled task for 5-min polling
+- 39 tests pass, secret-scan CI configured
 
-Live smoke test: `python main.py --account grobomo --repos grobomo/github-agent --once --dry-run -v`
+User asked: "What is your ETA for when I can add a comment in a discussion or issue and have you read and reply in near-real time?"
+Answer: The pipeline works end-to-end but needs `claude -p` available for intelligent replies (fallback rules only LOG/ALERT, don't RESPOND). The cron job polls every 5 min. For near-real-time, use continuous mode with shorter interval.
 
-## Spec 001 Task Status
-All complete — see `specs/001-core-engine/tasks.md`
+## Operational Status
+- [x] Polling: scheduled task runs every 5 min
+- [x] Store: SQLite + FTS working
+- [x] Brain: fallback rules working, `claude -p` integration ready but needs CLI available
+- [x] Dispatcher: gh comment posting works in dry-run, live mode ready
+- [ ] Live test: post a GitHub issue comment and verify agent detects + responds
+- [ ] Continuous mode deployment: `python main.py --account grobomo --interval 60` for near-real-time
 
-### Done
-- [x] T001: core/store.py — EventStore (SQLite + FTS)
-- [x] T002: core/brain.py — LLM analyzer + rule-based fallback
-- [x] T003: core/dispatcher.py — action executor (gh, CCC, email)
-- [x] T004: github/poller.py — polls all event types via gh_auto
-- [x] T005: github/normalizer.py — raw API → event records
-- [x] T006: config/accounts.yaml.example
-- [x] T007: github/settings.py — settings snapshot
-- [x] T008: Settings drift detection (wired into main loop)
-- [x] T009: core/context.py — rolling context cache for LLM prompts
-- [x] T010: Context cache file management (integrated into main loop)
-- [x] T011: main.py — CLI entry point with poll→analyze→dispatch loop
-- [x] T012: scripts/run.sh — multi-account parallel runner
-- [x] T013: scripts/install-cron.sh — cron/schtasks installer
-- [x] T014: Health check endpoint (/healthz, /stats)
-- [x] T015: Test EventStore (11 tests)
-- [x] T016: Test normalizer (15 tests)
-- [x] T017: Test brain fallback (9 tests)
-- [x] T018: Integration test (4 tests)
+## Remaining Tasks
 
-## Next Steps (post-merge)
-- [ ] Spec 002: Cross-agent integration (share EventStore schema with teams-agent)
-- [ ] Spec 003: Dashboard/reporting (HTML status page like v1-report)
-- [ ] Install cron job on actual machine (`bash scripts/install-cron.sh`)
-- [ ] Production deployment documentation
+### Spec 002 (Refactor & Harden) — more tasks possible
+- [x] T019: Extract github/gh_cli.py
+- [x] T020: Handle events API 404 gracefully
+- [x] T021: Fix schtasks path mangling
+
+### Future Specs
+- [ ] Spec 003: Cross-agent integration (share EventStore schema with teams-agent)
+- [ ] Spec 004: Dashboard/reporting (HTML status page like v1-report)
+- [ ] Spec 005: Webhook receiver (GitHub webhooks for instant notification instead of polling)
 
 ## Related Projects
 - `_grobomo/hook-monitor/` — hook health monitoring (TODO.md only)

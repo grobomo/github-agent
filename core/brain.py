@@ -142,6 +142,9 @@ def analyze_events(new_events: list[dict], history: list[dict],
         except (json.JSONDecodeError, TypeError) as e:
             logger.error(f'Failed to parse LLM output: {e}')
             return _fallback_decisions(new_events)
+    except subprocess.TimeoutExpired:
+        logger.warning('claude -p timed out, using fallback rules')
+        return _fallback_decisions(new_events)
     except FileNotFoundError:
         logger.warning('claude CLI not found, using fallback rules')
         return _fallback_decisions(new_events)
