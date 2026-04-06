@@ -1,8 +1,8 @@
 # Tasks: 003 Publish & Documentation
 
 ## Documentation
-- [ ] T031: Create README.md — architecture diagram, quick start, configuration, project structure, design decisions
-- [ ] T032: Add MIT LICENSE file
+- [x] T031: Create README.md — architecture diagram, quick start, configuration, project structure, design decisions
+- [x] T032: Add MIT LICENSE file
 
 ## GitHub Repo Polish
 - [ ] T033: Push all commits to grobomo/github-agent remote
