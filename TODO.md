@@ -17,7 +17,7 @@ Last session completed:
 ## Pending Work (from user feedback)
 - [x] Issue #16: Brain needs long-term context — Spec 008 complete (PR #19). Three-tier memory: hot cache + per-repo JSON + account-level memory. Compactor runs after each full scan.
 - [x] Clean up stale remote branch `spec-008-long-term-context`
-- [ ] Install scheduled task so service auto-starts (currently manual cmd.exe launch)
+- [x] Install scheduled task so service auto-starts — Spec 009 complete (silent VBS launcher, every 1 min with process guard)
 
 ## Operational Status
 - [x] Continuous service: `github-agent-service` (MINUTE/1 + process guard)
