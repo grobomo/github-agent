@@ -3,18 +3,15 @@
 ## Current State
 Branch: `main`
 Service: `github-agent-service` running continuously (MINUTE/1 with process guard)
-PRs merged: #1-#4, #7-#21 (specs 001-006, 008-009 complete)
-Tests: 81 passing
+PRs merged: #1-#4, #7-#22 (specs 001-006, 008-010 complete)
+Tests: 90 passing
 
 ## Session Handoff
 Last session completed:
-- Spec 008: Long-term brain context (PR #19) — three-tier memory
-- Spec 009: Silent service deployment (PR #20) — VBS launcher, scheduled task
-- T065: Fix install-scheduler.sh service.bat overwrite (PR #21)
-- Code review: all core modules clean, no issues found
-- All "Pending Work" items complete, 81 tests, 21 PRs merged
-- Next: Spec 007e (service health monitoring) — can be done within this project
-- Then: Spec 007a-c (unified brain with Teams integration) — cross-project, needs tmemu/teams-agent
+- Spec 010: Service health monitoring (PR #22) — log rotation, heartbeat, watchdog, circuit breaker
+- 90 tests passing, 22 PRs merged
+- Next: Spec 007a-c (unified brain with Teams integration) — cross-project, needs tmemu/teams-agent
+- Or: Spec 008 (webhook receiver) from Future Specs
 
 ## Pending Work (from user feedback)
 - [x] Issue #16: Brain needs long-term context — Spec 008 complete (PR #19). Three-tier memory: hot cache + per-repo JSON + account-level memory. Compactor runs after each full scan.
@@ -74,7 +71,7 @@ What needs to happen:
 - [ ] Spec 007b: Single brain service — one process, one DB, one LLM context window spanning ALL sources
 - [ ] Spec 007c: Teams poller as input channel — port teams-agent polling into a channel adapter for the unified brain
 - [x] Spec 007d: Silent service deployment — done as Spec 009 (VBS launcher, scheduled task, no visible windows)
-- [ ] Spec 007e: Service health monitoring — watchdog, auto-restart, log rotation
+- [x] Spec 007e: Service health monitoring — done as Spec 010 (PR #22: log rotation, heartbeat, watchdog, circuit breaker)
 - [ ] Spec 007f: Tests for unified pipeline, service lifecycle, channel adapters
 - [x] Spec 007g: Issue #16 — done as Spec 008 (three-tier memory: hot cache + per-repo JSON + account memory)
 
