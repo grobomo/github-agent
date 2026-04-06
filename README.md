@@ -40,7 +40,7 @@ Security-sensitive events (visibility changes, branch protection removal, admin 
 
 ```bash
 # Prerequisites: gh CLI authenticated, Python 3.12+
-pip install pyyaml  # optional, for config file support
+pip install -r requirements.txt  # optional: only pyyaml for config file support
 
 # Single account, single poll, dry run
 python main.py --account grobomo --once --dry-run -v
@@ -67,6 +67,24 @@ bash scripts/install-scheduler.sh --remove
 
 The service uses tiered polling: fast notification checks every 10 seconds, full repo scans every 5 minutes. A process guard prevents duplicate instances.
 
+## Dashboard
+
+Generate a self-contained HTML status page from the SQLite database:
+
+```bash
+# Generate report and open in browser
+python main.py --account grobomo --report
+
+# Custom output path
+python main.py --account grobomo --report --output status.html
+```
+
+The dashboard includes:
+- Agent status cards (total events, 24h activity, actions taken)
+- Event volume chart (SVG bar chart, last 24h by hour)
+- Recent events table with type badges
+- Action history (responses, alerts, dispatches)
+
 ## Project structure
 
 ```
@@ -76,6 +94,7 @@ core/
   brain.py                 # LLM analyzer + rule-based fallback
   dispatcher.py            # Action executor (gh comment, email, CCC)
   context.py               # Context cache for brain prompts
+  report.py                # HTML dashboard report generator
 github/
   poller.py                # GitHub API polling via gh CLI
   normalizer.py            # Raw API → EventStore records
@@ -86,7 +105,7 @@ scripts/
   service.bat              # Continuous service launcher (Windows)
   install-scheduler.sh     # Install/remove OS scheduled task
   run.sh                   # Run all accounts in parallel
-tests/                     # 39 tests covering all modules
+tests/                     # 49 tests covering all modules
 ```
 
 ## Design decisions

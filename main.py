@@ -62,7 +62,7 @@ def run_agent(account: str, repos: list[str] = None,
               db_path: str = None, poll_interval: float = 300,
               full_scan_interval: float = 300,
               dry_run: bool = False, once: bool = False,
-              health_port: int = 0):
+              health_port: int = 0, auto_report: bool = False):
     """Run the agent loop for a single account.
 
     When poll_interval < full_scan_interval, fast cycles poll only
@@ -216,6 +216,14 @@ def run_agent(account: str, repos: list[str] = None,
         logger.info(f'{len(new_events)} new events for {account} (full scan)')
         _analyze_and_dispatch(new_events)
 
+        if auto_report:
+            try:
+                from core.report import generate_report
+                path = generate_report(store, account, open_browser=False)
+                logger.info(f'Auto-report generated: {path}')
+            except Exception as e:
+                logger.error(f'Auto-report failed: {e}')
+
     # Main loop
     if once:
         try:
@@ -271,6 +279,8 @@ def main():
                         help='Generate HTML dashboard report and exit')
     parser.add_argument('--output', default=None,
                         help='Output path for report (used with --report)')
+    parser.add_argument('--auto-report', action='store_true',
+                        help='Generate HTML report after each full scan')
     parser.add_argument('--verbose', '-v', action='store_true')
 
     args = parser.parse_args()
@@ -301,6 +311,7 @@ def main():
         dry_run=args.dry_run,
         once=args.once,
         health_port=args.health_port,
+        auto_report=args.auto_report,
     )
 
 

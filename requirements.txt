@@ -1,0 +1,2 @@
+# Core dependencies (stdlib-only except pyyaml)
+pyyaml>=6.0    # optional: config file support (accounts.yaml)

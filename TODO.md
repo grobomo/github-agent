@@ -3,13 +3,14 @@
 ## Current State
 Branch: `main`
 Service: `github-agent-service` running continuously (MINUTE/1 with process guard)
-PRs merged: #1-#4, #7-#13 (specs 001-004 complete)
+PRs merged: #1-#4, #7-#14 (specs 001-005 complete)
 
 ## Session Handoff
 Last session completed:
-- T036-T041: Spec 004 dashboard — HTML report generator with SVG charts, 10 new tests
+- T042-T046: Spec 005 polish — requirements.txt, README dashboard docs, --auto-report flag
+- T036-T041: Spec 004 dashboard — HTML report generator with SVG charts
 - T031-T035: Spec 003 publish — README, LICENSE, repo description/topics
-- Previous: T019-T030 (spec 002), T001-T018 (spec 001), 49 tests total
+- Previous: specs 001-002, 49 tests total
 
 ## Operational Status
 - [x] Continuous service: `github-agent-service` (MINUTE/1 + process guard)
@@ -36,9 +37,16 @@ Last session completed:
 - [x] T040: 10 tests for report module
 - [x] T041: Task tracking updated
 
+## Spec 005 (Polish & Hardening) — complete
+- [x] T042: requirements.txt
+- [x] T043: README updated with dashboard docs
+- [x] T044: .gitignore already covers data/
+- [x] T045: --auto-report flag
+- [x] T046: Task tracking
+
 ## Future Specs
-- [ ] Spec 005: Cross-agent integration (share EventStore schema with teams-agent)
-- [ ] Spec 006: Webhook receiver (GitHub webhooks for instant notification)
+- [ ] Spec 006: Cross-agent integration (share EventStore schema with teams-agent)
+- [ ] Spec 007: Webhook receiver (GitHub webhooks for instant notification)
 
 ## Related Projects
 - `_grobomo/hook-monitor/` — hook health monitoring (TODO.md only)
