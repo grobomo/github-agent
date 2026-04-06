@@ -49,11 +49,22 @@ python main.py --account grobomo --health-port 8081
 bash scripts/install-scheduler.sh [--remove|--status]
 ```
 
+## Dashboard
+
+```bash
+# Generate HTML report and open in browser
+python main.py --account grobomo --report
+
+# Auto-generate after each full scan (background service mode)
+python main.py --account grobomo --interval 10 --auto-report
+```
+
 ## Key Files
 
 - `core/store.py` — EventStore (SQLite + FTS)
 - `core/brain.py` — LLM analyzer + rule-based fallback
 - `core/dispatcher.py` — Action executor
+- `core/report.py` — HTML dashboard report generator
 - `github/poller.py` — GitHub API polling via gh_auto
 - `github/normalizer.py` — Raw API → EventStore records
 - `github/settings.py` — Settings snapshot + drift detection
