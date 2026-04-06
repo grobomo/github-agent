@@ -1,14 +1,17 @@
 # GitHub Agent — TODO
 
 ## Current State
-Branch: `001-T001-event-store` (pushed to origin)
-Spec: `specs/001-core-engine/` — 11 of 18 tasks complete
+Branch: `001-T001-event-store` (all 18 tasks complete)
+Spec: `specs/001-core-engine/` — 18 of 18 tasks complete
+Status: Ready for PR to main
 
-Core is functional: EventStore, Brain, Dispatcher, Poller, Normalizer, Settings all working.
-Live smoke test passes: `python main.py --account grobomo --repos grobomo/github-agent --once --dry-run -v`
+Core is functional: EventStore, Brain, Dispatcher, Poller, Normalizer, Settings, Context Cache all working.
+39 tests pass. CI secret-scan configured.
+
+Live smoke test: `python main.py --account grobomo --repos grobomo/github-agent --once --dry-run -v`
 
 ## Spec 001 Task Status
-See `specs/001-core-engine/tasks.md` for full details.
+All complete — see `specs/001-core-engine/tasks.md`
 
 ### Done
 - [x] T001: core/store.py — EventStore (SQLite + FTS)
@@ -19,31 +22,23 @@ See `specs/001-core-engine/tasks.md` for full details.
 - [x] T006: config/accounts.yaml.example
 - [x] T007: github/settings.py — settings snapshot
 - [x] T008: Settings drift detection (wired into main loop)
+- [x] T009: core/context.py — rolling context cache for LLM prompts
+- [x] T010: Context cache file management (integrated into main loop)
 - [x] T011: main.py — CLI entry point with poll→analyze→dispatch loop
 - [x] T012: scripts/run.sh — multi-account parallel runner
+- [x] T013: scripts/install-cron.sh — cron/schtasks installer
 - [x] T014: Health check endpoint (/healthz, /stats)
+- [x] T015: Test EventStore (11 tests)
+- [x] T016: Test normalizer (15 tests)
+- [x] T017: Test brain fallback (9 tests)
+- [x] T018: Integration test (4 tests)
 
-### Remaining
-- [ ] T009: core/context.py — rolling context cache for claude -p
-- [ ] T010: Context cache file management
-- [ ] T013: scripts/install-cron.sh — cron job setup
-- [ ] T015: Test EventStore (formal test file)
-- [ ] T016: Test normalizer (formal test file)
-- [ ] T017: Test brain fallback
-- [ ] T018: Integration test with mock gh output
+## Next Steps (post-merge)
+- [ ] Spec 002: Cross-agent integration (share EventStore schema with teams-agent)
+- [ ] Spec 003: Dashboard/reporting (HTML status page like v1-report)
+- [ ] Install cron job on actual machine (`bash scripts/install-cron.sh`)
+- [ ] Production deployment documentation
 
-## Hook Fixes Applied This Session
-- **spec-gate.js**: Removed TODO.md fallback — specs/ now mandatory for code writes
-- **run-pretooluse.js, run-stop.js, run-userpromptsubmit.js**: Fixed block output to use exit(1) + stderr(reason) + stdout(JSON) pattern
-- **hook-editing-gate.js**: Updated exit code guidance to match correct protocol
-
-## Related Projects Created
-- `_grobomo/hook-monitor/` — new project for continuous hook health monitoring (TODO.md only, no code yet)
-  - Cross-refs added to hook-runner/TODO.md (T094) and system-monitor/TODO.md (T-HOOK)
-
-## Next Session Priority
-1. T009-T010: Context cache (makes brain smarter with rolling context files)
-2. T013: Cron job setup (makes it self-running)
-3. T015-T018: Formal test files
-4. Merge branch to main, create PR
-5. secret-scan.yml for CI
+## Related Projects
+- `_grobomo/hook-monitor/` — hook health monitoring (TODO.md only)
+  - Cross-refs: hook-runner/TODO.md (T094), system-monitor/TODO.md (T-HOOK)

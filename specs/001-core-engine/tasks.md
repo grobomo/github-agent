@@ -13,19 +13,19 @@
 - [x] T008: Settings drift detection — compare current snapshot to previous, generate ALERT events for security-sensitive changes
 
 ## Context Cache
-- [ ] T009: Create core/context.py — builds rolling context cache from EventStore for claude -p prompts (last 24h events, active issues/PRs summary, settings state)
-- [ ] T010: Context cache file management — write/read JSON cache files, rebuild on each poll cycle
+- [x] T009: Create core/context.py — builds rolling context cache from EventStore for claude -p prompts (last 24h events, active issues/PRs summary, settings state)
+- [x] T010: Context cache file management — write/read JSON cache files, rebuild on each poll cycle
 
 ## Main Entry Point
 - [x] T011: Create main.py — CLI entry point with --account flag, runs poll→store→analyze→dispatch loop with graceful shutdown
 - [x] T012: Create scripts/run.sh — wrapper that runs one agent per account in parallel
 
 ## Automation
-- [ ] T013: Create scripts/install-cron.sh — installs cron jobs for periodic polling (every 5 min per account)
+- [x] T013: Create scripts/install-cron.sh — installs cron jobs for periodic polling (every 5 min per account)
 - [x] T014: Health check endpoint — HTTP /healthz and /stats like teams-agent
 
 ## Testing
-- [ ] T015: Test EventStore — insert, dedup, search, context window, prune
-- [ ] T016: Test normalizer — verify all event types convert correctly
-- [ ] T017: Test brain fallback — when claude -p unavailable, rule-based decisions work
-- [ ] T018: Integration test — end-to-end poll→store→analyze with mock gh output
+- [x] T015: Test EventStore — insert, dedup, search, context window, prune
+- [x] T016: Test normalizer — verify all event types convert correctly
+- [x] T017: Test brain fallback — when claude -p unavailable, rule-based decisions work
+- [x] T018: Integration test — end-to-end poll→store→analyze with mock gh output
