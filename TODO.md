@@ -3,15 +3,18 @@
 ## Current State
 Branch: `main`
 Service: `github-agent-service` running continuously (MINUTE/1 with process guard)
-PRs merged: #1-#4, #7-#20 (specs 001-006, 008-009 complete)
+PRs merged: #1-#4, #7-#21 (specs 001-006, 008-009 complete)
 Tests: 81 passing
 
 ## Session Handoff
 Last session completed:
-- Spec 008: Long-term brain context (PR #19) — three-tier memory (hot cache + per-repo JSON + account memory)
-- Spec 009: Silent service deployment (PR #20) — VBS launcher, scheduled task, no visible windows
-- All "Pending Work" items complete, 81 tests, 20 PRs merged
-- Next: Spec 007a-c (unified brain with Teams integration) — major cross-project refactor
+- Spec 008: Long-term brain context (PR #19) — three-tier memory
+- Spec 009: Silent service deployment (PR #20) — VBS launcher, scheduled task
+- T065: Fix install-scheduler.sh service.bat overwrite (PR #21)
+- Code review: all core modules clean, no issues found
+- All "Pending Work" items complete, 81 tests, 21 PRs merged
+- Next: Spec 007e (service health monitoring) — can be done within this project
+- Then: Spec 007a-c (unified brain with Teams integration) — cross-project, needs tmemu/teams-agent
 
 ## Pending Work (from user feedback)
 - [x] Issue #16: Brain needs long-term context — Spec 008 complete (PR #19). Three-tier memory: hot cache + per-repo JSON + account-level memory. Compactor runs after each full scan.
