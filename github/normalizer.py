@@ -216,6 +216,31 @@ def normalize_discussion(disc: dict, account: str,
     }
 
 
+def normalize_settings_change(change: dict, account: str,
+                               repo: str) -> dict:
+    """Normalize a settings drift change into an event record."""
+    severity = change.get('severity', 'medium')
+    field = change.get('field', 'unknown')
+
+    return {
+        'source': 'github',
+        'account': account,
+        'channel': repo,
+        'event_id': f'gh:{repo}:settings:{field}:{hash(str(change)) & 0xFFFFFF:06x}',
+        'event_type': f'settings_{field.replace(".", "_")}',
+        'actor': '',
+        'title': change.get('description', f'Settings change: {field}'),
+        'body': '',
+        'metadata': {
+            'field': field,
+            'old_value': change.get('old_value'),
+            'new_value': change.get('new_value'),
+            'severity': severity,
+        },
+        'timestamp': '',  # filled by store's created_at
+    }
+
+
 def normalize_notification(notif: dict, account: str) -> dict:
     """Normalize a notification."""
     repo = notif.get('repository', {}).get('full_name', '')

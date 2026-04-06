@@ -134,6 +134,22 @@ def run_agent(account: str, repos: list[str] = None,
             if store.insert(**record):
                 new_events.append(record)
 
+        # Settings drift detection per repo
+        for repo_str in poller.repos:
+            parts = repo_str.split('/', 1)
+            if len(parts) != 2:
+                continue
+            try:
+                changes = poll_settings(parts[0], parts[1])
+                for change in changes:
+                    record = normalize_settings_change(
+                        change, account, repo_str
+                    )
+                    if store.insert(**record):
+                        new_events.append(record)
+            except Exception as e:
+                logger.error(f'Settings poll failed for {repo_str}: {e}')
+
         stats['polls'] += 1
         stats['events_stored'] += len(new_events)
 

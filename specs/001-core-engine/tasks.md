@@ -17,7 +17,7 @@
 - [ ] T010: Context cache file management — write/read JSON cache files, rebuild on each poll cycle
 
 ## Main Entry Point
-- [ ] T011: Create main.py — CLI entry point with --account flag, runs poll→store→analyze→dispatch loop with graceful shutdown
+- [x] T011: Create main.py — CLI entry point with --account flag, runs poll→store→analyze→dispatch loop with graceful shutdown
 - [ ] T012: Create scripts/run.sh — wrapper that runs one agent per account in parallel
 
 ## Automation
