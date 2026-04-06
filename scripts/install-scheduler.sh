@@ -85,37 +85,21 @@ install_periodic() {
 
 install_service() {
     if is_windows; then
-        WIN_PROJECT_DIR="$(cygpath -w "$PROJECT_DIR" 2>/dev/null || echo "$PROJECT_DIR")"
-        WIN_PYTHON="$(cygpath -w "$(which python)" 2>/dev/null || echo "python")"
-        WIN_LOG="$(cygpath -w "$LOG_FILE" 2>/dev/null || echo "$LOG_FILE")"
-        WIN_LOCK="$(cygpath -w "$PROJECT_DIR/data/agent.lock" 2>/dev/null || echo "$PROJECT_DIR\\data\\agent.lock")"
+        WIN_VBS="$(cygpath -w "$PROJECT_DIR/scripts/service-silent.vbs" 2>/dev/null || echo "$PROJECT_DIR\scripts\service-silent.vbs")"
 
-        # Create a batch file with process guard — exits if already running
-        BATCH_FILE="$PROJECT_DIR/scripts/service.bat"
-        {
-            echo "@echo off"
-            echo ":: Process guard: skip if agent is already running"
-            echo "tasklist /FI \"WINDOWTITLE eq github-agent-service\" 2>NUL | find /I \"cmd.exe\" >NUL && exit /b 0"
-            echo "if exist \"$WIN_LOCK\" ("
-            echo "  for /f %%a in ($WIN_LOCK) do tasklist /FI \"PID eq %%a\" 2>NUL | find /I \"python\" >NUL && exit /b 0"
-            echo ")"
-            echo "title github-agent-service"
-            echo "cd /d \"$WIN_PROJECT_DIR\""
-            for account in $ACCOUNTS; do
-                echo "echo %date% %time% Starting agent for $account >> \"$WIN_LOG\""
-                echo "\"$WIN_PYTHON\" main.py --account $account --interval $POLL_INTERVAL --full-scan-interval $FULL_SCAN_INTERVAL >> \"$WIN_LOG\" 2>&1"
-            done
-        } > "$BATCH_FILE"
-
-        WIN_BATCH="$(cygpath -w "$BATCH_FILE" 2>/dev/null || echo "$BATCH_FILE")"
-        WIN_VBS="$(cygpath -w "$PROJECT_DIR/scripts/service-silent.vbs" 2>/dev/null || echo "$PROJECT_DIR\\scripts\\service-silent.vbs")"
+        # Verify launchers exist (service-silent.vbs calls service.bat)
+        if [[ ! -f "$PROJECT_DIR/scripts/service-silent.vbs" ]]; then
+            echo "ERROR: scripts/service-silent.vbs not found" >&2; exit 1
+        fi
+        if [[ ! -f "$PROJECT_DIR/scripts/service.bat" ]]; then
+            echo "ERROR: scripts/service.bat not found" >&2; exit 1
+        fi
 
         # Remove old periodic task and any previous service task
         MSYS_NO_PATHCONV=1 schtasks.exe /Delete /TN "$TASK_NAME" /F 2>/dev/null || true
         MSYS_NO_PATHCONV=1 schtasks.exe /Delete /TN "$SERVICE_TASK_NAME" /F 2>/dev/null || true
 
-        # Create task every 1 minute using silent VBS launcher (no visible window)
-        # Process guard in service.bat prevents duplicate instances
+        # Silent VBS launcher -> service.bat (which has process guard)
         MSYS_NO_PATHCONV=1 schtasks.exe /Create \
             /TN "$SERVICE_TASK_NAME" \
             /TR "wscript.exe \"$WIN_VBS\"" \
@@ -123,11 +107,9 @@ install_service() {
             /MO 1 \
             /F
 
-        echo "Installed continuous service: $SERVICE_TASK_NAME (silent — no visible window)"
+        echo "Installed continuous service: $SERVICE_TASK_NAME (silent)"
         echo "  Schedule: every 1 min (process guard prevents duplicates)"
-        echo "  Fast poll: every ${POLL_INTERVAL}s (notifications only)"
-        echo "  Full scan: every ${FULL_SCAN_INTERVAL}s"
-        echo "  Batch: $BATCH_FILE"
+        echo "  Launcher: scripts/service-silent.vbs -> scripts/service.bat"
         echo "  Log: $LOG_FILE"
     else
         echo "Service mode on Linux: use systemd or run scripts/service.sh directly."
