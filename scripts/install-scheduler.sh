@@ -108,21 +108,22 @@ install_service() {
         } > "$BATCH_FILE"
 
         WIN_BATCH="$(cygpath -w "$BATCH_FILE" 2>/dev/null || echo "$BATCH_FILE")"
+        WIN_VBS="$(cygpath -w "$PROJECT_DIR/scripts/service-silent.vbs" 2>/dev/null || echo "$PROJECT_DIR\\scripts\\service-silent.vbs")"
 
         # Remove old periodic task and any previous service task
         MSYS_NO_PATHCONV=1 schtasks.exe /Delete /TN "$TASK_NAME" /F 2>/dev/null || true
         MSYS_NO_PATHCONV=1 schtasks.exe /Delete /TN "$SERVICE_TASK_NAME" /F 2>/dev/null || true
 
-        # Create task every 1 minute — process guard prevents duplicates
-        # Auto-restarts if the agent crashes (within 1 minute)
+        # Create task every 1 minute using silent VBS launcher (no visible window)
+        # Process guard in service.bat prevents duplicate instances
         MSYS_NO_PATHCONV=1 schtasks.exe /Create \
             /TN "$SERVICE_TASK_NAME" \
-            /TR "\"$WIN_BATCH\"" \
+            /TR "wscript.exe \"$WIN_VBS\"" \
             /SC MINUTE \
             /MO 1 \
             /F
 
-        echo "Installed continuous service: $SERVICE_TASK_NAME"
+        echo "Installed continuous service: $SERVICE_TASK_NAME (silent — no visible window)"
         echo "  Schedule: every 1 min (process guard prevents duplicates)"
         echo "  Fast poll: every ${POLL_INTERVAL}s (notifications only)"
         echo "  Full scan: every ${FULL_SCAN_INTERVAL}s"
