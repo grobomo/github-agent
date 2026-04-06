@@ -69,10 +69,11 @@ install_windows() {
     WIN_BATCH="$(cygpath -w "$BATCH_FILE" 2>/dev/null || echo "$BATCH_FILE")"
 
     # Remove existing task if any
-    schtasks.exe /Delete /TN "$TASK_NAME" /F 2>/dev/null || true
+    # MSYS_NO_PATHCONV prevents Git Bash from mangling /flags as file paths
+    MSYS_NO_PATHCONV=1 schtasks.exe /Delete /TN "$TASK_NAME" /F 2>/dev/null || true
 
     # Create scheduled task (every 5 minutes)
-    schtasks.exe /Create \
+    MSYS_NO_PATHCONV=1 schtasks.exe /Create \
         /TN "$TASK_NAME" \
         /TR "\"$WIN_BATCH\"" \
         /SC MINUTE \
@@ -86,10 +87,9 @@ install_windows() {
 
 remove_cron() {
     if is_windows; then
-        schtasks.exe /Delete /TN "$TASK_NAME" /F 2>/dev/null && \
+        MSYS_NO_PATHCONV=1 schtasks.exe /Delete /TN "$TASK_NAME" /F 2>/dev/null && \
             echo "Removed task: $TASK_NAME" || \
             echo "Task not found: $TASK_NAME"
-        rm -f "$PROJECT_DIR/scripts/poll.bat"
     else
         if crontab -l 2>/dev/null | grep -qF "$TASK_NAME"; then
             crontab -l | grep -v "$TASK_NAME" | grep -vF "scripts/run.sh" | crontab -
@@ -102,7 +102,7 @@ remove_cron() {
 
 status_cron() {
     if is_windows; then
-        schtasks.exe /Query /TN "$TASK_NAME" 2>/dev/null && \
+        MSYS_NO_PATHCONV=1 schtasks.exe /Query /TN "$TASK_NAME" 2>/dev/null && \
             echo "Status: INSTALLED" || \
             echo "Status: NOT INSTALLED"
     else
