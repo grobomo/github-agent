@@ -14,3 +14,6 @@
 - [x] T025: Rename install-cron.sh → install-scheduler.sh (not using cron)
 - [x] T026: Fast-poll mode — notifications-only for intervals <30s, full repo scan at configurable longer interval
 - [x] T027: Service launcher script with configurable interval for near-real-time polling
+
+## Fixes
+- [x] T028: Fix dispatcher email alert — replace broken email_manager CLI call with alerts.jsonl log file

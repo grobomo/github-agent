@@ -10,8 +10,6 @@ Routes actions to the appropriate handler:
 import json
 import logging
 import os
-import subprocess
-import sys
 from typing import Optional, Callable
 
 from github.gh_cli import gh_command as _gh_command
@@ -169,12 +167,19 @@ class Dispatcher:
 
 
 def _send_email_alert(subject: str, body: str):
-    """Send email via email-manager CLI."""
-    email_mgr = os.path.expanduser(
-        '~/Documents/ProjectsCL1/_grobomo/email-manager'
-    )
-    subprocess.run(
-        [sys.executable, '-m', 'email_manager', 'send',
-         '--to', 'self', '--subject', subject, '--body', body],
-        cwd=email_mgr, timeout=30,
-    )
+    """Log alert to alerts.jsonl file.
+
+    Future: integrate with smtp-relay skill or MS Graph for actual email delivery.
+    """
+    import datetime
+    alerts_dir = os.path.join(os.path.dirname(__file__), '..', 'data')
+    os.makedirs(alerts_dir, exist_ok=True)
+    alerts_file = os.path.join(alerts_dir, 'alerts.jsonl')
+    entry = json.dumps({
+        'timestamp': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        'subject': subject,
+        'body': body,
+    })
+    with open(alerts_file, 'a', encoding='utf-8') as f:
+        f.write(entry + '\n')
+    logger.info(f'Alert logged: {subject}')
