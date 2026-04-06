@@ -18,6 +18,8 @@ from core.store import EventStore
 from core.brain import analyze_events, _fallback_decisions
 from core.context import ContextCache
 from core.dispatcher import Dispatcher
+from core.memory import MemoryStore
+from core.compactor import MemoryCompactor
 from github.poller import GitHubPoller
 from github.normalizer import (
     normalize_issue, normalize_pr, normalize_event,
@@ -63,7 +65,8 @@ def run_agent(account: str, repos: list[str] = None,
               db_path: str = None, poll_interval: float = 300,
               full_scan_interval: float = 300,
               dry_run: bool = False, once: bool = False,
-              health_port: int = 0, auto_report: bool = False):
+              health_port: int = 0, auto_report: bool = False,
+              no_memory: bool = False):
     """Run the agent loop for a single account.
 
     When poll_interval < full_scan_interval, fast cycles poll only
@@ -96,6 +99,8 @@ def run_agent(account: str, repos: list[str] = None,
     poller = GitHubPoller(account, repos=repos)
     dispatcher = Dispatcher(store, dry_run=dry_run)
     context_cache = ContextCache(store, account)
+    memory_store = None if no_memory else MemoryStore()
+    compactor = None if no_memory else MemoryCompactor(store, memory_store, account)
 
     logger.info(
         f'Starting github-agent for {account}, '
@@ -167,11 +172,27 @@ def run_agent(account: str, repos: list[str] = None,
         """Run brain analysis and dispatch actions."""
         context = context_cache.build_and_save()
         history = store.get_context_window(account=account, hours=24)
+
+        # Load long-term memory for repos touched by new events
+        acct_mem = None
+        repo_mems = None
+        if memory_store:
+            acct_mem = memory_store.load_account_memory(account)
+            touched_repos = set()
+            for evt in new_events:
+                channel = evt.get('channel', '')
+                if channel.startswith('gh:'):
+                    touched_repos.add(channel[3:])  # strip 'gh:' prefix
+            if touched_repos:
+                repo_mems = memory_store.get_memories_for_repos(
+                    account, list(touched_repos)
+                )
+
         decisions = analyze_events(new_events, history, {
             'account': account,
             'total_events': store.count(account=account),
             'context_summary': context_cache.build_prompt_context(),
-        })
+        }, account_memory=acct_mem, repo_memories=repo_mems)
 
         for decision in decisions:
             eid = decision.get('event_id', '')
@@ -232,6 +253,30 @@ def run_agent(account: str, repos: list[str] = None,
             return
         logger.info(f'{len(new_events)} new events for {account} (full scan)')
         _analyze_and_dispatch(new_events)
+
+        # Memory compaction after full scan
+        if compactor:
+            try:
+                touched = set()
+                for evt in new_events:
+                    ch = evt.get('channel', '')
+                    if ch.startswith('gh:'):
+                        touched.add(ch[3:])
+                if touched:
+                    updated = compactor.compact_repos(list(touched))
+                    if updated:
+                        logger.info(f'Memory compacted for {updated} repos')
+
+                # Account summary: daily
+                acct = memory_store.load_account_memory(account)
+                last_acct = acct.get('last_compacted_at', '')
+                from datetime import datetime, timezone
+                now = datetime.now(timezone.utc).isoformat()
+                if not last_acct or last_acct[:10] != now[:10]:
+                    if compactor.compact_account():
+                        logger.info('Account memory compacted')
+            except Exception as e:
+                logger.error(f'Memory compaction failed: {e}')
 
         if auto_report:
             try:
@@ -306,6 +351,8 @@ def main():
                         help='Output path for report (used with --report)')
     parser.add_argument('--auto-report', action='store_true',
                         help='Generate HTML report after each full scan')
+    parser.add_argument('--no-memory', action='store_true',
+                        help='Disable long-term memory (Tier 2/3)')
     parser.add_argument('--verbose', '-v', action='store_true')
 
     args = parser.parse_args()
@@ -337,6 +384,7 @@ def main():
         once=args.once,
         health_port=args.health_port,
         auto_report=args.auto_report,
+        no_memory=args.no_memory,
     )
 
 

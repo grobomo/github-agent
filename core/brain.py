@@ -57,21 +57,65 @@ Return a JSON array with one entry per new event:
 
 def _build_context_prompt(new_events: list[dict],
                           history: list[dict],
-                          account_info: Optional[dict] = None) -> str:
-    """Build the full prompt with context for the LLM."""
+                          account_info: Optional[dict] = None,
+                          account_memory: Optional[dict] = None,
+                          repo_memories: Optional[dict] = None) -> str:
+    """Build the full prompt with context for the LLM.
+
+    Args:
+        new_events: Events to analyze
+        history: Recent events (Tier 1 hot cache)
+        account_info: Account metadata
+        account_memory: Tier 3 account-level memory
+        repo_memories: Tier 2 per-repo memories {repo_name: memory_dict}
+    """
     parts = []
     context_summary = None
+
+    # Tier 3: Account-level memory (cross-repo awareness)
+    if account_memory and account_memory.get('summary'):
+        parts.append("## Account Overview (long-term memory)")
+        parts.append(account_memory['summary'])
+        if account_memory.get('trajectory'):
+            parts.append(f"Trajectory: {account_memory['trajectory']}")
+        if account_memory.get('repo_relationships'):
+            parts.append("Repo relationships:")
+            for rel in account_memory['repo_relationships'][:10]:
+                parts.append(f"  - {rel}")
+        # Recent actions from long-term log
+        action_log = account_memory.get('action_log', [])
+        if action_log:
+            parts.append(f"\nRecent agent actions ({len(action_log)} total):")
+            for act in action_log[-10:]:
+                parts.append(f"  - {act.get('action', '?')} on {act.get('target', '?')}: {act.get('reason', '')}")
+
+    # Tier 2: Per-repo memories (only for repos touched by new events)
+    if repo_memories:
+        parts.append("\n## Repo Context (long-term memory)")
+        for repo_name, mem in repo_memories.items():
+            if not mem.get('purpose') and not mem.get('open_threads'):
+                continue
+            parts.append(f"\n### {repo_name}")
+            if mem.get('purpose'):
+                parts.append(f"Purpose: {mem['purpose']}")
+            if mem.get('open_threads'):
+                parts.append(f"Open threads: {', '.join(mem['open_threads'][:10])}")
+            if mem.get('milestones'):
+                parts.append(f"Recent milestones: {', '.join(mem['milestones'][-5:])}")
+            if mem.get('key_collaborators'):
+                parts.append(f"Collaborators: {', '.join(mem['key_collaborators'][:10])}")
 
     if account_info:
         # Use structured context summary if available (from ContextCache)
         if isinstance(account_info, dict):
             context_summary = account_info.pop('context_summary', None)
-        parts.append(f"## Account Info\n{json.dumps(account_info, indent=2)}")
+        parts.append(f"\n## Account Info\n{json.dumps(account_info, indent=2)}")
 
+    # Tier 1: Hot cache (recent events)
     if context_summary:
         parts.append(f"\n{context_summary}")
     elif history:
-        parts.append("## Recent Activity (last 24h)")
+        parts.append("\n## Recent Activity (last 24h)")
         for evt in history[-100:]:
             parts.append(
                 f"- [{evt.get('timestamp', '?')}] "
@@ -105,12 +149,15 @@ def _build_context_prompt(new_events: list[dict],
 
 
 def analyze_events(new_events: list[dict], history: list[dict],
-                   account_info: Optional[dict] = None) -> list[dict]:
+                   account_info: Optional[dict] = None,
+                   account_memory: Optional[dict] = None,
+                   repo_memories: Optional[dict] = None) -> list[dict]:
     """Send events to claude -p for analysis. Returns list of decisions."""
     if not new_events:
         return []
 
-    prompt = _build_context_prompt(new_events, history, account_info)
+    prompt = _build_context_prompt(new_events, history, account_info,
+                                   account_memory, repo_memories)
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False,
                                       encoding='utf-8') as f:
