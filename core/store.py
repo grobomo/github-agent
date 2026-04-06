@@ -63,9 +63,10 @@ class EventStore:
         self.db_path = db_path or DEFAULT_DB_PATH
         if self.db_path != ':memory:':
             os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
-        self.conn = sqlite3.connect(self.db_path)
+        self.conn = sqlite3.connect(self.db_path, timeout=10)
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA journal_mode=WAL")
+        self.conn.execute("PRAGMA busy_timeout=5000")
         self.conn.executescript(SCHEMA)
 
     def insert(self, source: str, account: str, channel: str, event_id: str,
