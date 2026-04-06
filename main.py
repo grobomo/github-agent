@@ -7,11 +7,14 @@ Poll → normalize → store → brain → dispatch loop.
 import argparse
 import json
 import logging
+import logging.handlers
 import os
 import sqlite3
 import signal
+import sys
 import threading
 import time
+from datetime import datetime, timezone
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 from core.store import EventStore
@@ -61,12 +64,33 @@ def _load_config(path: str) -> dict:
         return {}
 
 
+def _write_heartbeat(path: str, stats: dict, account: str):
+    """Write heartbeat file with current stats for watchdog monitoring."""
+    heartbeat = {
+        'pid': os.getpid(),
+        'account': account,
+        'timestamp': datetime.now(timezone.utc).isoformat(),
+        'polls': stats.get('polls', 0),
+        'full_scans': stats.get('full_scans', 0),
+        'errors': stats.get('errors', 0),
+        'last_full_scan': (
+            datetime.fromtimestamp(stats['last_full_scan'], tz=timezone.utc).isoformat()
+            if stats.get('last_full_scan') else None
+        ),
+        'status': stats.get('status', 'ok'),
+    }
+    tmp = path + '.tmp'
+    with open(tmp, 'w') as f:
+        json.dump(heartbeat, f, indent=2)
+    os.replace(tmp, path)
+
+
 def run_agent(account: str, repos: list[str] = None,
               db_path: str = None, poll_interval: float = 300,
               full_scan_interval: float = 300,
               dry_run: bool = False, once: bool = False,
               health_port: int = 0, auto_report: bool = False,
-              no_memory: bool = False):
+              no_memory: bool = False, max_errors: int = 0):
     """Run the agent loop for a single account.
 
     When poll_interval < full_scan_interval, fast cycles poll only
@@ -94,6 +118,8 @@ def run_agent(account: str, repos: list[str] = None,
             pass
 
     _write_lock()
+    heartbeat_path = os.path.join(data_dir, 'heartbeat.json')
+    consecutive_errors = 0
 
     store = EventStore(db_path)
     poller = GitHubPoller(account, repos=repos)
@@ -293,6 +319,7 @@ def run_agent(account: str, repos: list[str] = None,
         except Exception as e:
             logger.error(f'Poll cycle failed: {e}')
         finally:
+            _write_heartbeat(heartbeat_path, stats, account)
             store.close()
             _remove_lock()
         return
@@ -307,18 +334,35 @@ def run_agent(account: str, repos: list[str] = None,
                 poll_full()
             else:
                 poll_fast()
+            consecutive_errors = 0
         except sqlite3.OperationalError as e:
             if 'locked' in str(e).lower():
                 logger.warning(f'DB locked, will retry next cycle: {e}')
                 stats['errors'] += 1
+                consecutive_errors += 1
             else:
                 raise
         except Exception as e:
             logger.error(f'Poll cycle error: {e}')
             stats['errors'] += 1
+            consecutive_errors += 1
+
+        _write_heartbeat(heartbeat_path, stats, account)
+
+        if max_errors and consecutive_errors >= max_errors:
+            logger.error(
+                f'Circuit breaker: {consecutive_errors} consecutive errors, exiting'
+            )
+            stats['status'] = 'circuit_breaker'
+            _write_heartbeat(heartbeat_path, stats, account)
+            store.close()
+            _remove_lock()
+            sys.exit(2)
+
         _shutdown.wait(timeout=poll_interval)
 
     logger.info(f'Shutting down agent for {account}')
+    _write_heartbeat(heartbeat_path, stats, account)
     store.close()
     _remove_lock()
 
@@ -353,14 +397,39 @@ def main():
                         help='Generate HTML report after each full scan')
     parser.add_argument('--no-memory', action='store_true',
                         help='Disable long-term memory (Tier 2/3)')
+    parser.add_argument('--max-errors', type=int, default=50,
+                        help='Exit after N consecutive errors (0 to disable)')
+    parser.add_argument('--log-max-bytes', type=int, default=5_000_000,
+                        help='Max log file size in bytes before rotation (default: 5MB)')
+    parser.add_argument('--log-backup-count', type=int, default=3,
+                        help='Number of rotated log files to keep (default: 3)')
     parser.add_argument('--verbose', '-v', action='store_true')
 
     args = parser.parse_args()
 
-    logging.basicConfig(
-        level=logging.DEBUG if args.verbose else logging.INFO,
-        format='%(asctime)s %(name)s %(levelname)s %(message)s',
+    log_level = logging.DEBUG if args.verbose else logging.INFO
+    log_format = '%(asctime)s %(name)s %(levelname)s %(message)s'
+    data_dir = os.path.join(os.path.dirname(__file__), 'data')
+    os.makedirs(data_dir, exist_ok=True)
+    log_file = os.path.join(data_dir, 'agent.log')
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(log_level)
+    formatter = logging.Formatter(log_format)
+
+    # Rotating file handler
+    file_handler = logging.handlers.RotatingFileHandler(
+        log_file,
+        maxBytes=args.log_max_bytes,
+        backupCount=args.log_backup_count,
     )
+    file_handler.setFormatter(formatter)
+    root_logger.addHandler(file_handler)
+
+    # Console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    root_logger.addHandler(console_handler)
 
     if args.report:
         from core.report import generate_report
@@ -385,6 +454,7 @@ def main():
         health_port=args.health_port,
         auto_report=args.auto_report,
         no_memory=args.no_memory,
+        max_errors=args.max_errors,
     )
 
 
