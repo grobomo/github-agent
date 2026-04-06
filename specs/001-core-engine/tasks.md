@@ -18,11 +18,11 @@
 
 ## Main Entry Point
 - [x] T011: Create main.py — CLI entry point with --account flag, runs poll→store→analyze→dispatch loop with graceful shutdown
-- [ ] T012: Create scripts/run.sh — wrapper that runs one agent per account in parallel
+- [x] T012: Create scripts/run.sh — wrapper that runs one agent per account in parallel
 
 ## Automation
 - [ ] T013: Create scripts/install-cron.sh — installs cron jobs for periodic polling (every 5 min per account)
-- [ ] T014: Health check endpoint — HTTP /healthz and /stats like teams-agent
+- [x] T014: Health check endpoint — HTTP /healthz and /stats like teams-agent
 
 ## Testing
 - [ ] T015: Test EventStore — insert, dedup, search, context window, prune
